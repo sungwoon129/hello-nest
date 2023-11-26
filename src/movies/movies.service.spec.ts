@@ -15,4 +15,9 @@ describe('MoviesService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+
+  it('getAll() should be Array', () => {
+    const result = service.getAll();
+    expect(result).toBeInstanceOf(Array);
+  });
 });
