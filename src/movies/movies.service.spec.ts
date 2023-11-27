@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MoviesService } from './movies.service';
 import { NotFoundException } from '@nestjs/common';
+import { Movie } from './entity/movie.entity';
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 describe('MoviesService', () => {
   let service: MoviesService;
@@ -8,38 +11,36 @@ describe('MoviesService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [MoviesService],
+      imports: [TypeOrmModule.forFeature([Movie])],
     }).compile();
 
     service = module.get<MoviesService>(MoviesService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe(`getAll`, () => {
-    it('should be return Array', () => {
-      const result = service.getAll();
+    it('should be return Array', async () => {
+      const result = await service.getAll();
       expect(result).toBeInstanceOf(Array);
     });
   });
 
   describe(`getOne`, () => {
-    it(`should be return a movie`, () => {
-      service.create({
+    it(`should be return a movie`, async () => {
+      const moive = {
         title: `Test Movie`,
         genres: ['test'],
         year: 2000,
-      });
+      };
+      await service.create(moive);
 
-      const movie = service.getOne(1);
+      const movie = await service.getOne(1);
       expect(movie).toBeDefined();
-      expect(movie.id).toEqual(1);
+      expect(movie).toEqual(moive);
     });
 
-    it(`should throw 404 error`, () => {
+    it(`should throw 404 error`, async () => {
       try {
-        service.getOne(999);
+        await service.getOne(999);
       } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
         expect(e.message).toEqual(`Movie with ID 999 not found.`);
@@ -48,21 +49,21 @@ describe('MoviesService', () => {
   });
 
   describe(`deleteOne`, () => {
-    it(`deletes a moive`, () => {
-      service.create({
+    it(`deletes a moive`, async () => {
+      await service.create({
         title: `Test Movie`,
         genres: ['test'],
         year: 2000,
       });
-      const beforeDelete = service.getAll().length;
-      service.deleteOne(1);
-      const afterDelete = service.getAll().length;
+      const beforeDelete = (await service.getAll()).length;
+      await service.deleteOne(1);
+      const afterDelete = (await service.getAll()).length;
 
       expect(afterDelete).toBeLessThan(beforeDelete);
     });
-    it(`should return a 404`, () => {
+    it(`should return a 404`, async () => {
       try {
-        service.deleteOne(999);
+        await service.deleteOne(999);
       } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
         expect(e.message).toEqual(`Movie with ID 999 not found.`);
@@ -71,33 +72,33 @@ describe('MoviesService', () => {
   });
 
   describe(`create`, () => {
-    it(`should create a moive`, () => {
+    it(`should create a moive`, async () => {
       const movie = {
         title: `Test Movie`,
         genres: ['test'],
         year: 2000,
       };
 
-      service.create(movie);
-      expect(service.getOne(1).title).toEqual(movie.title);
+      await service.create(movie);
+      expect((await service.getOne(1)).title).toEqual(movie.title);
     });
   });
 
   describe(`update`, () => {
-    it(`should update a moive`, () => {
-      service.create({
+    it(`should update a moive`, async () => {
+      await service.create({
         title: `Test Movie`,
         genres: ['test'],
         year: 2000,
       });
-      service.update(1, { title: 'Updated Test' });
-      const movie = service.getOne(1);
+      await service.update(1, { title: 'Updated Test' });
+      const movie = await service.getOne(1);
       expect(movie.title).toEqual(`Updated Test`);
     });
 
-    it(`should throw a NotFoundException`, () => {
+    it(`should throw a NotFoundException`, async () => {
       try {
-        service.update(999, { title: 'Updated Test' });
+        await service.update(999, { title: 'Updated Test' });
       } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
         expect(e.message).toEqual(`Movie with ID 999 not found.`);

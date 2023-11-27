@@ -26,7 +26,7 @@ export class Movie {
   year: number;
 
   @Column({ type: 'json', nullable: true })
-  geners: string[];
+  genres: string[];
 
   @CreateDateColumn()
   createdAt: Date;
