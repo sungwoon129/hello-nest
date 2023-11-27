@@ -1,4 +1,18 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  DeleteDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+export enum Gener {
+  ACTION = 'action',
+  ROMANCE = 'romance',
+  COMEDY = 'comedy',
+  DRAMA = 'drama',
+}
 
 @Entity()
 export class Movie {
@@ -11,6 +25,15 @@ export class Movie {
   @Column()
   year: number;
 
-  @Column(`varchar`, { array: true, nullable: true })
+  @Column({ type: 'json', nullable: true })
   geners: string[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }
