@@ -21,6 +21,7 @@ import { Movie } from './movies/entity/movie.entity';
       database: process.env.DB_NAME,
       entities: [Movie],
       synchronize: true,
+      logging: true,
     }),
   ],
   controllers: [AppController],
