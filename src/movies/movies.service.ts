@@ -10,7 +10,7 @@ export class MoviesService {
   constructor(
     @InjectRepository(Movie)
     private moviesRepository: Repository<Movie>,
-    private dataSource: DataSource,
+    // private dataSource: DataSource,
   ) {}
 
   async getAll(): Promise<Movie[]> {
@@ -24,12 +24,12 @@ export class MoviesService {
   }
 
   async update(movieId: number, updateData: UpdateMovieDto): Promise<void> {
-    this.getOne(movieId);
+    await this.getOne(movieId);
     await this.moviesRepository.update(movieId, updateData);
   }
 
   async deleteOne(movieId: number): Promise<void> {
-    this.getOne(movieId);
+    await this.getOne(movieId);
     await this.moviesRepository.delete(movieId);
   }
 
@@ -37,22 +37,22 @@ export class MoviesService {
     return await this.moviesRepository.save(movieData);
   }
 
-  async createMany(movieList: Movie[]) {
-    const queryRunner = this.dataSource.createQueryRunner();
+  // async createMany(movieList: Movie[]) {
+  //   const queryRunner = this.dataSource.createQueryRunner();
 
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      await queryRunner.manager.save(movieList[0]);
-      await queryRunner.manager.save(movieList[1]);
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+  //   try {
+  //     await queryRunner.manager.save(movieList[0]);
+  //     await queryRunner.manager.save(movieList[1]);
 
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      // since we have errors lets rollback the changes we made
-      await queryRunner.rollbackTransaction();
-    } finally {
-      // you need to release a queryRunner which was manually instantiated
-      await queryRunner.release();
-    }
-  }
+  //     await queryRunner.commitTransaction();
+  //   } catch (err) {
+  //     // since we have errors lets rollback the changes we made
+  //     await queryRunner.rollbackTransaction();
+  //   } finally {
+  //     // you need to release a queryRunner which was manually instantiated
+  //     await queryRunner.release();
+  //   }
+  // }
 }
