@@ -2,64 +2,98 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MoviesService } from './movies.service';
 import { NotFoundException } from '@nestjs/common';
 import { Movie } from './entity/movie.entity';
-import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { MoviesModule } from './movies.module';
 import { Repository } from 'typeorm';
+
+const mockMovieRepository = () => ({
+  findOneBy: jest.fn(),
+  find: jest.fn(),
+  create: jest.fn(),
+  save: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+});
+
+type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 
 describe('MoviesService', () => {
   let service: MoviesService;
+  let repository: MockRepository<Movie>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MoviesService],
-      imports: [TypeOrmModule.forFeature([Movie])],
+      providers: [
+        MoviesService,
+        { provide: getRepositoryToken(Movie), useValue: mockMovieRepository() },
+      ],
     }).compile();
 
     service = module.get<MoviesService>(MoviesService);
+    repository = module.get<MockRepository<Movie>>(getRepositoryToken(Movie));
   });
 
-  describe(`getAll`, () => {
-    it('should be return Array', async () => {
-      const result = await service.getAll();
-      expect(result).toBeInstanceOf(Array);
+  describe('getAll', () => {
+    it('should return an array of movies', async () => {
+      const result: Movie[] = [
+        {
+          id: 1,
+          title: 'Test Movie',
+          year: 2023,
+          genres: ['action'],
+          createdAt: new Date(),
+          deletedAt: null,
+          updatedAt: new Date(),
+        },
+      ];
+      jest.spyOn(repository, 'find').mockResolvedValue(result);
+
+      expect(await service.getAll()).toEqual(result);
     });
   });
 
-  describe(`getOne`, () => {
-    it(`should be return a movie`, async () => {
-      const moive = {
-        title: `Test Movie`,
-        genres: ['test'],
-        year: 2000,
+  describe('getOne', () => {
+    it('should return a movie with the given ID', async () => {
+      const result: Movie = {
+        id: 1,
+        title: 'Test Movie',
+        year: 2023,
+        genres: ['action'],
+        createdAt: new Date(),
+        deletedAt: null,
+        updatedAt: new Date(),
       };
-      await service.create(moive);
+      jest.spyOn(repository, 'findOneBy').mockResolvedValue(result);
 
-      const movie = await service.getOne(1);
-      expect(movie).toBeDefined();
-      expect(movie).toEqual(moive);
+      expect(await service.getOne(1)).toEqual(result);
     });
 
-    it(`should throw 404 error`, async () => {
-      try {
-        await service.getOne(999);
-      } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
-        expect(e.message).toEqual(`Movie with ID 999 not found.`);
-      }
+    it('should throw NotFoundException if movie with given ID is not found', async () => {
+      jest.spyOn(repository, 'findOneBy').mockResolvedValue(undefined);
+
+      await expect(service.getOne(1)).rejects.toThrowError(NotFoundException);
     });
   });
 
   describe(`deleteOne`, () => {
     it(`deletes a moive`, async () => {
-      await service.create({
-        title: `Test Movie`,
-        genres: ['test'],
-        year: 2000,
-      });
-      const beforeDelete = (await service.getAll()).length;
-      await service.deleteOne(1);
-      const afterDelete = (await service.getAll()).length;
+      const result: Movie = {
+        id: 1,
+        title: 'Test Movie',
+        year: 2023,
+        genres: ['action'],
+        createdAt: new Date(),
+        deletedAt: null,
+        updatedAt: new Date(),
+      };
+      jest.spyOn(repository, 'findOneBy').mockResolvedValue(result);
+      jest.spyOn(repository, 'delete').mockResolvedValue(undefined);
+      await service.deleteOne(result.id);
 
-      expect(afterDelete).toBeLessThan(beforeDelete);
+      expect(repository.findOneBy).toHaveBeenCalledWith({ id: result.id });
+
+      expect(repository.delete).toHaveBeenCalledWith(result.id);
+      expect(repository.delete).toHaveBeenCalledTimes(1);
     });
     it(`should return a 404`, async () => {
       try {
@@ -86,14 +120,25 @@ describe('MoviesService', () => {
 
   describe(`update`, () => {
     it(`should update a moive`, async () => {
-      await service.create({
-        title: `Test Movie`,
-        genres: ['test'],
-        year: 2000,
-      });
+      const result: Movie = {
+        id: 1,
+        title: 'Test Movie',
+        year: 2023,
+        genres: ['action'],
+        createdAt: new Date(),
+        deletedAt: null,
+        updatedAt: new Date(),
+      };
+      jest.spyOn(repository, 'findOneBy').mockResolvedValue(result);
+
       await service.update(1, { title: 'Updated Test' });
-      const movie = await service.getOne(1);
-      expect(movie.title).toEqual(`Updated Test`);
+
+      expect(repository.findOneBy).toHaveBeenCalledWith({ id: result.id });
+
+      expect(repository.update).toHaveBeenCalledTimes(1);
+      expect(repository.update).toHaveBeenCalledWith(result.id, {
+        title: 'Updated Test',
+      });
     });
 
     it(`should throw a NotFoundException`, async () => {
