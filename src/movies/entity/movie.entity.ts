@@ -1,3 +1,4 @@
+import { Theater } from 'src/theaters/entity/theaters.entity';
 import {
   Entity,
   Column,
@@ -5,6 +6,8 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 
 export enum Gener {
@@ -27,6 +30,14 @@ export class Movie {
 
   @Column({ type: 'json', nullable: true })
   genres: string[];
+
+  @ManyToMany(() => Theater, { cascade: true })
+  @JoinTable({
+    name: 'movie_theater',
+    joinColumn: { name: 'movie_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'theater_id', referencedColumnName: 'id' },
+  })
+  theaters: Theater[];
 
   @CreateDateColumn()
   createdAt: Date;

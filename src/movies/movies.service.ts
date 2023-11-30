@@ -17,9 +17,20 @@ export class MoviesService {
   }
 
   async getOne(id: number): Promise<Movie> {
-    const movie = await this.moviesRepository.findOneBy({ id });
+    const movie = await this.moviesRepository.findOne({
+      where: { id },
+      relations: [`theaters`],
+    });
     if (!movie) throw new NotFoundException(`Movie with ID ${id} not found.`);
-    return movie;
+
+    const moive2 = this.moviesRepository
+      .createQueryBuilder('movie')
+      .leftJoinAndSelect('movie.theaters', 'theaters')
+      .leftJoinAndSelect('theaters.theater', 'theater')
+      .where('movie.id = :id', { id })
+      .getOne();
+
+    return moive2;
   }
 
   async update(movieId: number, updateData: UpdateMovieDto): Promise<void> {
