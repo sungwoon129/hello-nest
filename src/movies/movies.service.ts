@@ -17,22 +17,26 @@ export class MoviesService {
   }
 
   async getOne(id: number): Promise<Movie> {
+    /**
+     * @ManyToMany를 사용해서 양방향관계를 구현한 경우 동작. relations는 해당 엔티티에 존재하는 필드만 참조할 수 있다.
     const movie = await this.moviesRepository.findOne({
       where: { id },
       relations: [`theaters`],
     });
-    if (!movie) throw new NotFoundException(`Movie with ID ${id} not found.`);
+    */
 
     /**
-     * 쿼리 빌더 사용
-     
+     * @ManyToOne과 @OneToMany를 사용해서 직접 중간테이블을 만든 뒤 쿼리빌더를 통해 조회하는 방법. movie엔티티에는 movie_theater 에 대한 정보만 존재하므로 relations를 사용할 수 없다.
+     */
     const movie = this.moviesRepository
       .createQueryBuilder('movie')
-      .leftJoinAndSelect('movie.theaters', 'theaters')
+      .leftJoinAndSelect('movie.theaters', 'movie_theater')
+      .leftJoinAndSelect('movie_theater.theater', 'theater')
       .where('movie.id = :id', { id })
       .getOne();
-    *  
-    */
+
+    if (!movie) throw new NotFoundException(`Movie with ID ${id} not found.`);
+
     return movie;
   }
 
