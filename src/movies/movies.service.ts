@@ -23,14 +23,17 @@ export class MoviesService {
     });
     if (!movie) throw new NotFoundException(`Movie with ID ${id} not found.`);
 
-    const moive2 = this.moviesRepository
+    /**
+     * 쿼리 빌더 사용
+     
+    const movie = this.moviesRepository
       .createQueryBuilder('movie')
       .leftJoinAndSelect('movie.theaters', 'theaters')
-      .leftJoinAndSelect('theaters.theater', 'theater')
       .where('movie.id = :id', { id })
       .getOne();
-
-    return moive2;
+    *  
+    */
+    return movie;
   }
 
   async update(movieId: number, updateData: UpdateMovieDto): Promise<void> {
