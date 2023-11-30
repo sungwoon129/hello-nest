@@ -6,6 +6,8 @@ import { ConfigModule } from '@nestjs/config';
 import { Movie } from './movies/entity/movie.entity';
 import { TheatersModule } from './theaters/theaters.module';
 import { Theater } from './theaters/entity/theaters.entity';
+import { MovieTheaterModule } from './movie-theater/movie-theater.module';
+import { MovieTheater } from './movie-theater/entity/movie-theater.entity';
 
 @Module({
   imports: [
@@ -22,10 +24,11 @@ import { Theater } from './theaters/entity/theaters.entity';
       username: process.env.DB_ID,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [Movie, Theater],
+      entities: [Movie, Theater, MovieTheater],
       synchronize: true,
       logging: true,
     }),
+    MovieTheaterModule,
   ],
   controllers: [AppController],
   providers: [],

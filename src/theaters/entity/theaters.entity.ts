@@ -1,4 +1,4 @@
-import { Movie } from 'src/movies/entity/movie.entity';
+import { MovieTheater } from 'src/movie-theater/entity/movie-theater.entity';
 import {
   Entity,
   Column,
@@ -6,7 +6,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   UpdateDateColumn,
-  ManyToMany,
+  OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -23,8 +23,8 @@ export class Theater {
   @Column()
   location: string;
 
-  @ManyToMany(() => Movie, { cascade: true })
-  moives: Movie[];
+  @OneToMany(() => MovieTheater, (movieTheater) => movieTheater.theater)
+  movies: MovieTheater[];
 
   @CreateDateColumn()
   createdAt: Date;
