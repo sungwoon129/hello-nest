@@ -1,4 +1,4 @@
-import { MovieTheater } from 'src/movie-theater/entity/movie-theater.entity';
+import { MovieTheater } from '../../movie-theater/entity/movie-theater.entity';
 import {
   Entity,
   Column,
