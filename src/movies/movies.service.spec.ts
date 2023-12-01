@@ -55,7 +55,7 @@ describe('MoviesService', () => {
 
   describe('getOne', () => {
     beforeEach(async () => {
-      jest.spyOn(repository.createQueryBuilder(), 'getOne').mockResolvedValue({
+      jest.spyOn(repository, 'findOne').mockResolvedValue({
         id: 1,
         title: 'Test Movie',
         year: 2023,
@@ -68,20 +68,15 @@ describe('MoviesService', () => {
       await service.getOne(1);
     });
     it('should return a movie with the given ID', async () => {
-      expect(repository.createQueryBuilder).toHaveBeenCalledTimes(2);
-      expect(
-        repository.createQueryBuilder().leftJoinAndSelect,
-      ).toHaveBeenCalledTimes(2);
-      expect(repository.createQueryBuilder().where).toHaveBeenCalledWith(
-        'movie.id = :id',
-        { id: 1 },
-      );
+      expect(repository.findOne).toHaveBeenCalledTimes(1);
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: 1 },
+        relations: [`theaters`, `theaters.theater`],
+      });
     });
 
     it('should throw NotFoundException if movie with given ID is not found', async () => {
-      jest
-        .spyOn(repository.createQueryBuilder(), 'getOne')
-        .mockResolvedValue(undefined);
+      jest.spyOn(repository, 'findOne').mockResolvedValue(undefined);
 
       try {
         await service.getOne(999);
@@ -108,10 +103,10 @@ describe('MoviesService', () => {
       jest.spyOn(repository, 'delete').mockResolvedValue(undefined);
       await service.deleteOne(result.id);
 
-      // expect(repository.findOne).toHaveBeenCalledWith({
-      //   where: { id: result.id },
-      //   relations: [`theaters`, `theaters.theater`],
-      // });
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: result.id },
+        relations: [`theaters`, `theaters.theater`],
+      });
 
       expect(repository.delete).toHaveBeenCalledWith(result.id);
       expect(repository.delete).toHaveBeenCalledTimes(1);
@@ -135,7 +130,7 @@ describe('MoviesService', () => {
       };
 
       await service.create(movie);
-      //expect((await service.getOne(1)).title).toEqual(movie.title);
+      expect((await service.getOne(1)).title).toEqual(movie.title);
 
       expect(repository.save).toHaveBeenCalledTimes(1);
       expect(repository.save).toHaveBeenCalledWith(movie);
@@ -154,17 +149,9 @@ describe('MoviesService', () => {
         deletedAt: null,
         updatedAt: new Date(),
       };
-      //jest.spyOn(repository, 'findOne').mockResolvedValue(result);
-      jest
-        .spyOn(repository.createQueryBuilder(), 'getOne')
-        .mockResolvedValue(result);
+      jest.spyOn(repository, 'findOne').mockResolvedValue(result);
 
       await service.update(1, { title: 'Updated Test' });
-
-      // expect(repository.findOne).toHaveBeenCalledWith({
-      //   where: { id: result.id },
-      //   relations: [`theaters`, `theaters.theater`],
-      // });
 
       expect(repository.update).toHaveBeenCalledTimes(1);
       expect(repository.update).toHaveBeenCalledWith(result.id, {

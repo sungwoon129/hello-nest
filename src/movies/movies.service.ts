@@ -20,20 +20,20 @@ export class MoviesService {
     /**
      * TypeORM findOne을 통해 조회
      * */
-    // const movie = await this.moviesRepository.findOne({
-    //   where: { id },
-    //   relations: [`theaters`, `theaters.theater`],
-    // });
+    const movie = await this.moviesRepository.findOne({
+      where: { id },
+      relations: [`theaters`, `theaters.theater`],
+    });
 
     /**
      * 쿼리빌더를 통해 조회.
      */
-    const movie = this.moviesRepository
-      .createQueryBuilder('movie')
-      .leftJoinAndSelect('movie.theaters', 'movie_theater')
-      .leftJoinAndSelect('movie_theater.theater', 'theater')
-      .where('movie.id = :id', { id })
-      .getOne();
+    // const movie = this.moviesRepository
+    //   .createQueryBuilder('movie')
+    //   .leftJoinAndSelect('movie.theaters', 'movie_theater')
+    //   .leftJoinAndSelect('movie_theater.theater', 'theater')
+    //   .where('movie.id = :id', { id })
+    //   .getOne();
 
     if (!movie) throw new NotFoundException(`Movie with ID ${id} not found.`);
 
