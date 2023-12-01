@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MoviesService } from './movies.service';
 import { NotFoundException } from '@nestjs/common';
+// Jest는 프로젝트 내부파일을 참조할 때 상대경로를 사용하기때문에 import 경로를 상대경로로 작성해야함. import한 파일의 내부에서도 프로젝트 내 파일 참조시 상대경로로 작성해야함
 import { Movie } from './entity/movie.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -41,7 +42,6 @@ describe('MoviesService', () => {
     repository = module.get<MockRepository<Movie>>(getRepositoryToken(Movie));
   });
 
-  // TODO: Entity의 변화에 맞게 테스트 코드 수정 필요
   describe('getAll', () => {
     it('should return an array of movies', async () => {
       const mockMovies = [];
@@ -152,6 +152,11 @@ describe('MoviesService', () => {
       jest.spyOn(repository, 'findOne').mockResolvedValue(result);
 
       await service.update(1, { title: 'Updated Test' });
+
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: { id: result.id },
+        relations: [`theaters`, `theaters.theater`],
+      });
 
       expect(repository.update).toHaveBeenCalledTimes(1);
       expect(repository.update).toHaveBeenCalledWith(result.id, {
