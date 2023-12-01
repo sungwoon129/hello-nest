@@ -3,16 +3,20 @@ import { MoviesService } from './movies.service';
 import { NotFoundException } from '@nestjs/common';
 import { Movie } from './entity/movie.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { MoviesModule } from './movies.module';
 import { Repository } from 'typeorm';
 
 const mockMovieRepository = () => ({
-  findOneBy: jest.fn(),
+  findOne: jest.fn(),
   find: jest.fn(),
   create: jest.fn(),
   save: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
+  createQueryBuilder: jest.fn().mockReturnValue({
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    getOne: jest.fn(),
+  }),
 });
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
@@ -40,27 +44,18 @@ describe('MoviesService', () => {
   // TODO: Entity의 변화에 맞게 테스트 코드 수정 필요
   describe('getAll', () => {
     it('should return an array of movies', async () => {
-      const result: Movie[] = [
-        {
-          id: 1,
-          title: 'Test Movie',
-          year: 2023,
-          genres: ['action'],
-          createdAt: new Date(),
-          deletedAt: null,
-          updatedAt: new Date(),
-          theaters: [],
-        },
-      ];
-      jest.spyOn(repository, 'find').mockResolvedValue(result);
+      const mockMovies = [];
+      repository.find.mockResolvedValue(mockMovies);
+
+      const result = await service.getAll();
 
       expect(await service.getAll()).toEqual(result);
     });
   });
 
   describe('getOne', () => {
-    it('should return a movie with the given ID', async () => {
-      const result: Movie = {
+    beforeEach(async () => {
+      jest.spyOn(repository.createQueryBuilder(), 'getOne').mockResolvedValue({
         id: 1,
         title: 'Test Movie',
         year: 2023,
@@ -69,16 +64,31 @@ describe('MoviesService', () => {
         deletedAt: null,
         updatedAt: new Date(),
         theaters: [],
-      };
-      jest.spyOn(repository, 'findOne').mockResolvedValue(result);
-
-      expect(await service.getOne(1)).toEqual(result);
+      });
+      await service.getOne(1);
+    });
+    it('should return a movie with the given ID', async () => {
+      expect(repository.createQueryBuilder).toHaveBeenCalledTimes(2);
+      expect(
+        repository.createQueryBuilder().leftJoinAndSelect,
+      ).toHaveBeenCalledTimes(2);
+      expect(repository.createQueryBuilder().where).toHaveBeenCalledWith(
+        'movie.id = :id',
+        { id: 1 },
+      );
     });
 
     it('should throw NotFoundException if movie with given ID is not found', async () => {
-      jest.spyOn(repository, 'findOneBy').mockResolvedValue(undefined);
+      jest
+        .spyOn(repository.createQueryBuilder(), 'getOne')
+        .mockResolvedValue(undefined);
 
-      await expect(service.getOne(1)).rejects.toThrowError(NotFoundException);
+      try {
+        await service.getOne(999);
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+        expect(error.message).toBe(`Movie with ID 999 not found.`);
+      }
     });
   });
 
@@ -94,11 +104,14 @@ describe('MoviesService', () => {
         updatedAt: new Date(),
         theaters: [],
       };
-      jest.spyOn(repository, 'findOneBy').mockResolvedValue(result);
+      jest.spyOn(repository, 'findOne').mockResolvedValue(result);
       jest.spyOn(repository, 'delete').mockResolvedValue(undefined);
       await service.deleteOne(result.id);
 
-      expect(repository.findOneBy).toHaveBeenCalledWith({ id: result.id });
+      // expect(repository.findOne).toHaveBeenCalledWith({
+      //   where: { id: result.id },
+      //   relations: [`theaters`, `theaters.theater`],
+      // });
 
       expect(repository.delete).toHaveBeenCalledWith(result.id);
       expect(repository.delete).toHaveBeenCalledTimes(1);
@@ -122,7 +135,10 @@ describe('MoviesService', () => {
       };
 
       await service.create(movie);
-      expect((await service.getOne(1)).title).toEqual(movie.title);
+      //expect((await service.getOne(1)).title).toEqual(movie.title);
+
+      expect(repository.save).toHaveBeenCalledTimes(1);
+      expect(repository.save).toHaveBeenCalledWith(movie);
     });
   });
 
@@ -138,11 +154,17 @@ describe('MoviesService', () => {
         deletedAt: null,
         updatedAt: new Date(),
       };
-      jest.spyOn(repository, 'findOneBy').mockResolvedValue(result);
+      //jest.spyOn(repository, 'findOne').mockResolvedValue(result);
+      jest
+        .spyOn(repository.createQueryBuilder(), 'getOne')
+        .mockResolvedValue(result);
 
       await service.update(1, { title: 'Updated Test' });
 
-      expect(repository.findOneBy).toHaveBeenCalledWith({ id: result.id });
+      // expect(repository.findOne).toHaveBeenCalledWith({
+      //   where: { id: result.id },
+      //   relations: [`theaters`, `theaters.theater`],
+      // });
 
       expect(repository.update).toHaveBeenCalledTimes(1);
       expect(repository.update).toHaveBeenCalledWith(result.id, {

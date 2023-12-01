@@ -1,5 +1,5 @@
-import { Movie } from 'src/movies/entity/movie.entity';
-import { Theater } from 'src/theaters/entity/theaters.entity';
+import { Movie } from '../../movies/entity/movie.entity';
+import { Theater } from '../../theaters/entity/theaters.entity';
 import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: `movie_theater` })
