@@ -21,6 +21,10 @@ describe('MoviesService', () => {
   let service: MoviesService;
   let repository: MockRepository<Movie>;
 
+  /**
+   * 여기서 MoviesModule 클래스를 import 할 경우 MoviesRepository의 DataSource에 의존성을 주입할 수 없다는 오류가 나온다.
+   * 아마 DataSource 설정이 MoviesModule과 테스트환경에서 충돌이 발생해 나타나는 오류로 추측된다.
+   */
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -33,6 +37,7 @@ describe('MoviesService', () => {
     repository = module.get<MockRepository<Movie>>(getRepositoryToken(Movie));
   });
 
+  // TODO: Entity의 변화에 맞게 테스트 코드 수정 필요
   describe('getAll', () => {
     it('should return an array of movies', async () => {
       const result: Movie[] = [
@@ -44,6 +49,7 @@ describe('MoviesService', () => {
           createdAt: new Date(),
           deletedAt: null,
           updatedAt: new Date(),
+          theaters: [],
         },
       ];
       jest.spyOn(repository, 'find').mockResolvedValue(result);
@@ -62,8 +68,9 @@ describe('MoviesService', () => {
         createdAt: new Date(),
         deletedAt: null,
         updatedAt: new Date(),
+        theaters: [],
       };
-      jest.spyOn(repository, 'findOneBy').mockResolvedValue(result);
+      jest.spyOn(repository, 'findOne').mockResolvedValue(result);
 
       expect(await service.getOne(1)).toEqual(result);
     });
@@ -85,6 +92,7 @@ describe('MoviesService', () => {
         createdAt: new Date(),
         deletedAt: null,
         updatedAt: new Date(),
+        theaters: [],
       };
       jest.spyOn(repository, 'findOneBy').mockResolvedValue(result);
       jest.spyOn(repository, 'delete').mockResolvedValue(undefined);
@@ -110,7 +118,7 @@ describe('MoviesService', () => {
       const movie = {
         title: `Test Movie`,
         genres: ['test'],
-        year: 2000,
+        year: 2023,
       };
 
       await service.create(movie);
@@ -125,6 +133,7 @@ describe('MoviesService', () => {
         title: 'Test Movie',
         year: 2023,
         genres: ['action'],
+        theaters: [],
         createdAt: new Date(),
         deletedAt: null,
         updatedAt: new Date(),
