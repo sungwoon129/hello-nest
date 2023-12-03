@@ -86,8 +86,11 @@ export class MoviesService {
       );
 
       await queryRunner.commitTransaction();
-    } catch (err) {
+    } catch (error) {
       await queryRunner.rollbackTransaction();
+      throw new Error(
+        `여러개의 영화를 등록하는 중에 오류가 발생했습니다. \n ${error.message}`,
+      );
     } finally {
       await queryRunner.release();
       return result;
@@ -102,17 +105,23 @@ export class MoviesService {
   ): Promise<number[]> {
     const entityArr: Movie[] = plainToInstance(Movie, movieList);
 
-    //await this.dataSource.transaction(async (trasactionalEntityManager) => {...}) 도 동일하게 작용
-    const result = await this.dataSource.manager.transaction(
-      async (trasactionalEntityManager) => {
-        const data = await Promise.all(
-          entityArr.map((movie) =>
-            trasactionalEntityManager.getRepository(Movie).save(movie),
-          ),
-        );
-        return data.map((movie) => movie.id);
-      },
-    );
-    return result;
+    try {
+      //await this.dataSource.transaction(async (trasactionalEntityManager) => {...}) 도 동일하게 작용
+      const result = await this.dataSource.manager.transaction(
+        async (trasactionalEntityManager) => {
+          const data = await Promise.all(
+            entityArr.map((movie) =>
+              trasactionalEntityManager.getRepository(Movie).save(movie),
+            ),
+          );
+          return data.map((movie) => movie.id);
+        },
+      );
+      return result;
+    } catch (error) {
+      throw new Error(
+        `여러개의 영화를 등록하는 중에 오류가 발생했습니다. \n ${error.message}`,
+      );
+    }
   }
 }
