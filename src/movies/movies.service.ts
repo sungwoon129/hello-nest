@@ -56,7 +56,6 @@ export class MoviesService {
     return await this.moviesRepository.save(movieData);
   }
 
-
   /**
    * QueryRunner를 사용한 nestjs 트랜잭션 구현. QueryRunner는 dataSource나 Connection에 의존성을 가지고 있어 테스트하기 까다롭긴 하지만, 트랜잭션 전 과정을 개발자가 컨트롤 할 수 있어
    * 공식문서에서 권장하는 방법.
