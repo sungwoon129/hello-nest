@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Movie } from './entity/movie.entity';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateMovieDto } from './dto/create-movie.dto';
 
 @Injectable()
@@ -10,6 +10,7 @@ export class MoviesService {
   constructor(
     @InjectRepository(Movie)
     private readonly moviesRepository: Repository<Movie>,
+    private dataSource: DataSource,
   ) {}
 
   async getAll(): Promise<Movie[]> {
@@ -54,22 +55,22 @@ export class MoviesService {
     return await this.moviesRepository.save(movieData);
   }
 
-  // async createMany(movieList: Movie[]) {
-  //   const queryRunner = this.dataSource.createQueryRunner();
+  async createManyByQueryRunner(movieList: CreateMovieDto[]): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
 
-  //   await queryRunner.connect();
-  //   await queryRunner.startTransaction();
-  //   try {
-  //     await queryRunner.manager.save(movieList[0]);
-  //     await queryRunner.manager.save(movieList[1]);
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      movieList.forEach(async (dto) => {
+        console.log(dto.toEntity());
+        await queryRunner.manager.save(dto.toEntity);
+      });
 
-  //     await queryRunner.commitTransaction();
-  //   } catch (err) {
-  //     // since we have errors lets rollback the changes we made
-  //     await queryRunner.rollbackTransaction();
-  //   } finally {
-  //     // you need to release a queryRunner which was manually instantiated
-  //     await queryRunner.release();
-  //   }
-  // }
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }

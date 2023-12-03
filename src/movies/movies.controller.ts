@@ -42,4 +42,9 @@ export class MoviesController {
   ): void {
     this.moviesService.update(movieId, updateData);
   }
+
+  @Post(`/multiple`)
+  createMany(@Body() movieList: CreateMovieDto[]): Promise<void> {
+    return this.moviesService.createManyByQueryRunner(movieList);
+  }
 }
