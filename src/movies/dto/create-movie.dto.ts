@@ -13,11 +13,6 @@ export class CreateMovieDto {
   readonly genres: string[];
 
   toEntity(): Movie {
-    const instance = new Movie();
-    instance.title = this.title;
-    instance.year = this.year;
-    instance.genres = this.genres;
-
-    return instance;
+    return new Movie(this.title, this.year, this.genres);
   }
 }

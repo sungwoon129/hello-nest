@@ -54,5 +54,6 @@ export class MoviesController {
 
     //return this.moviesService.createManyByQueryRunner(movieDtoInstances);
     return this.moviesService.createManyByEntityManager(movieDtoInstances);
+
   }
 }

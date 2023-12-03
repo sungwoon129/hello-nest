@@ -18,6 +18,12 @@ export enum Gener {
 
 @Entity()
 export class Movie {
+  constructor(title: string, year: number, genres?: string[]) {
+    this.title = title;
+    this.year = year;
+    this.genres = genres;
+  }
+
   @PrimaryGeneratedColumn()
   id: number;
 
