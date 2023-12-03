@@ -44,7 +44,16 @@ export class MoviesController {
   }
 
   @Post(`/multiple`)
-  createMany(@Body() movieList: CreateMovieDto[]): Promise<void> {
-    return this.moviesService.createManyByQueryRunner(movieList);
+  createMany(@Body() movieList: CreateMovieDto[]): Promise<number[]> {
+    // class-transformer의 plainToInstance 함수를 사용하지 않을 경우, 직접 인스턴스를 만들어야 dto 클래스 내부 함수를 사용할 수 있음
+    const movieDtoInstances: CreateMovieDto[] = movieList.map((json) => {
+      const instance = new CreateMovieDto();
+      Object.assign(instance, json);
+      return instance;
+    });
+
+    //return this.moviesService.createManyByQueryRunner(movieDtoInstances);
+    return this.moviesService.createManyByEntityManager(movieDtoInstances);
+
   }
 }
