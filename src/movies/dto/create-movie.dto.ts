@@ -1,5 +1,5 @@
 import { IsString, IsNumber, IsOptional } from 'class-validator';
-import { Movie } from 'movies/entity/movie.entity';
+import { Movie } from '../entity/movie.entity';
 
 export class CreateMovieDto {
   @IsString()

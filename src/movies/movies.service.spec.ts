@@ -4,7 +4,9 @@ import { NotFoundException } from '@nestjs/common';
 // Jest는 프로젝트 내부파일을 참조할 때 상대경로를 사용하기때문에 import 경로를 상대경로로 작성해야함. import한 파일의 내부에서도 프로젝트 내 파일 참조시 상대경로로 작성해야함
 import { Movie } from './entity/movie.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { CreateMovieDto } from './dto/create-movie.dto';
+import { plainToInstance } from 'class-transformer';
 
 const mockMovieRepository = () => ({
   findOne: jest.fn(),
@@ -19,6 +21,19 @@ const mockMovieRepository = () => ({
     getOne: jest.fn(),
   }),
 });
+
+class MockQueryRunner {
+  manager = {
+    save: jest.fn().mockImplementation((movie: Movie) => {
+      return Promise.resolve({ ...movie, id: 1 });
+    }),
+  };
+  connect() {}
+  startTransaction() {}
+  commitTransaction() {}
+  rollbackTransaction() {}
+  release() {}
+}
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 
@@ -35,6 +50,15 @@ describe('MoviesService', () => {
       providers: [
         MoviesService,
         { provide: getRepositoryToken(Movie), useValue: mockMovieRepository() },
+        {
+          provide: DataSource,
+          useValue: {
+            createQueryRunner: jest.fn(() => new MockQueryRunner()),
+            manager: {
+              transaction: jest.fn((cb) => cb(new MockQueryRunner())),
+            },
+          },
+        },
       ],
     }).compile();
 
@@ -123,17 +147,18 @@ describe('MoviesService', () => {
 
   describe(`create`, () => {
     it(`should create a moive`, async () => {
-      const movie = {
+      const instance: CreateMovieDto = new CreateMovieDto();
+      const data = {
         title: `Test Movie`,
-        genres: ['test'],
         year: 2023,
+        genres: [`test`],
       };
+      Object.assign(instance, data);
 
-      await service.create(movie);
-      expect((await service.getOne(1)).title).toEqual(movie.title);
+      await service.create(instance);
 
       expect(repository.save).toHaveBeenCalledTimes(1);
-      expect(repository.save).toHaveBeenCalledWith(movie);
+      expect(repository.save).toHaveBeenCalledWith(instance);
     });
   });
 
@@ -172,5 +197,19 @@ describe('MoviesService', () => {
         expect(e.message).toEqual(`Movie with ID 999 not found.`);
       }
     });
+  });
+
+  it('should create many movies with QueryRunner', async () => {
+    const movieList: CreateMovieDto[] = plainToInstance(CreateMovieDto, [
+      { title: 'Movie 1', year: 2022, genres: ['Action'] },
+      { title: 'Movie 2', year: 2023, genres: ['Drama'] },
+    ]);
+
+    const result = await service.createManyByQueryRunner(movieList);
+
+    expect(result).toEqual([1, 1]);
+    expect(result).toHaveLength(2);
+    expect(result).toContain(1);
+    expect(repository.save).toHaveBeenCalledTimes(1);
   });
 });

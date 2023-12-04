@@ -75,15 +75,14 @@ export class MoviesService {
     await queryRunner.startTransaction();
     try {
       const entityArr: Movie[] = plainToInstance(Movie, movieList);
-      const savePromises: Promise<Movie>[] = entityArr.map((movie: Movie) =>
-        queryRunner.manager.save(movie),
-      );
+      const savePromises: Promise<Movie>[] = entityArr.map((movie: Movie) => {
+        const entity = queryRunner.manager.save(movie);
+        entity.then((row) => result.push(row.id));
+        return entity;
+      });
 
       // forEach와 같은 일반 반복문의 경우 비동기 함수의 처리에서 오류가 발생할 수 있으므로 Promise.all 사용 권장
       await Promise.all(savePromises);
-      savePromises.forEach((promise) =>
-        promise.then((movie) => result.push(movie.id)),
-      );
 
       await queryRunner.commitTransaction();
     } catch (error) {
