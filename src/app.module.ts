@@ -8,7 +8,6 @@ import { TheatersModule } from './theaters/theaters.module';
 import { Theater } from './theaters/entity/theaters.entity';
 import { MovieTheaterModule } from './movie-theater/movie-theater.module';
 import { MovieTheater } from './movie-theater/entity/movie-theater.entity';
-import config from './config/db-config';
 
 @Module({
   imports: [
@@ -17,7 +16,6 @@ import config from './config/db-config';
     ConfigModule.forRoot({
       envFilePath: `.env.${process.env.NODE_ENV}`,
       isGlobal: true,
-      load: [config],
     }),
     TypeOrmModule.forRoot({
       type: 'mysql',
