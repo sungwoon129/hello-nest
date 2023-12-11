@@ -9,7 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 
-export enum Gener {
+export enum Genre {
   ACTION = 'action',
   ROMANCE = 'romance',
   COMEDY = 'comedy',
